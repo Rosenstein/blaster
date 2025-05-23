@@ -125,6 +125,7 @@ func main() {
 	flag_format := flag.String("format", "list", "JSON format (list, map, or lines)")
 	flag_outfile := flag.String("outfile", "", "Output to a file")
 	flag_norules := flag.Bool("norules", false, "Don't query server rules")
+	flag_noinfo := flag.Bool("noinfo", false, "Don't query server info")
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage: -game or -appids\n")
 		flag.PrintDefaults()
@@ -209,9 +210,18 @@ func main() {
 		}
 		defer query.Close()
 
-		info, err := query.QueryInfo()
-		if err != nil {
-			addError(addr.String(), err)
+		var info *valve.ServerInfo
+		if !*flag_noinfo {
+			info, err = query.QueryInfo()
+			if err != nil {
+				addError(addr.String(), err)
+				return
+			}
+		} else {
+			// When -noinfo is specified, create a minimal server object with just the address
+			addJson(addr.String(), &ServerObject{
+				Address: addr.String(),
+			})
 			return
 		}
 
